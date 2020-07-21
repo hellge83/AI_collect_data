@@ -84,7 +84,7 @@ def sj_main_request():
 def sj_request(page):
     headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36'}
     url = sj_url
-    params = {
+    params = {'profession_only': 1,
               'page': page,
     }
     response = requests.get(url, headers = headers, params = params)
@@ -128,7 +128,7 @@ def sj_page_vac(page):
         
     return(sj_vac)
 
-vacancy = 'царь'
+vacancy = 'бог'
 # vacancy = 'аналитик'
 # vacancy = input('input vacancy for search:\n')    
 
@@ -155,9 +155,12 @@ for i in range(1,3):
 
 
 vacancies_list = hh_final + sj_final
-vacancies = pd.concat([pd.DataFrame.from_dict(vacancies_list[itm], orient='index').T for itm in range(len(vacancies_list))])
-
-vacancies.loc[vacancies['min_salary'] != '', 'min_salary'] = vacancies.loc[vacancies['min_salary'] != '', 'min_salary'].astype(int)
-vacancies.loc[vacancies['max_salary'] != '', 'max_salary'] = vacancies.loc[vacancies['max_salary'] != '', 'max_salary'].astype(int)
-vacancies.loc[vacancies['min_salary'] == '', 'min_salary'] = np.nan
-vacancies.loc[vacancies['max_salary'] == '', 'max_salary'] = np.nan
+if vacancies_list:
+    vacancies = pd.concat([pd.DataFrame.from_dict(vacancies_list[itm], orient='index').T for itm in range(len(vacancies_list))])
+    
+    vacancies.loc[vacancies['min_salary'] != '', 'min_salary'] = vacancies.loc[vacancies['min_salary'] != '', 'min_salary'].astype(int)
+    vacancies.loc[vacancies['max_salary'] != '', 'max_salary'] = vacancies.loc[vacancies['max_salary'] != '', 'max_salary'].astype(int)
+    vacancies.loc[vacancies['min_salary'] == '', 'min_salary'] = np.nan
+    vacancies.loc[vacancies['max_salary'] == '', 'max_salary'] = np.nan
+else:
+    print('No vacancy')
