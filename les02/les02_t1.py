@@ -75,7 +75,10 @@ def sj_main_request():
     # sj_main_response = sj_main_request()
     url = response.url
     page = bs(response.text, 'lxml')
-    maxpage = int(page.find_all('div', {'class': '_3zucV L1p51 undefined _2guZ- _GJem'})[0].findChildren(recursive = False)[-2].getText())
+    if page.find_all('div', {'class': '_3zucV L1p51 undefined _2guZ- _GJem'}):
+        maxpage = int(page.find_all('div', {'class': '_3zucV L1p51 undefined _2guZ- _GJem'})[0].findChildren(recursive = False)[-2].getText())
+    else:
+        maxpage = 1
     return url, maxpage
  
 def sj_request(page):
@@ -125,13 +128,17 @@ def sj_page_vac(page):
         
     return(sj_vac)
 
+vacancy = 'царь'
 # vacancy = 'аналитик'
-vacancy = input('input vacancy for search:\n')    
+# vacancy = input('input vacancy for search:\n')    
 
 
 hh_main_response = hh_request(0)
 hh_page = bs(hh_main_response.text, 'lxml')
-hh_maxpage = int(hh_page.find_all('a', {'class': 'bloko-button HH-Pager-Control'})[-1].getText()) - 1
+if hh_page.find_all('a', {'class': 'bloko-button HH-Pager-Control'}):
+    hh_maxpage = int(hh_page.find_all('a', {'class': 'bloko-button HH-Pager-Control'})[-1].getText()) - 1
+else:
+    hh_maxpage = 0
 
 hh_final = []
 # for i in range(hh_maxpage):
