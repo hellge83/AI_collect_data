@@ -55,9 +55,15 @@ class InstaparserSpider(scrapy.Spider):
             config_path = self.itm['path']
             config_hash = self.itm['query_hash']
             url_list = f"{self.graphql_url}query_hash={config_hash}&{urlencode(variables)}"
+            
+            if self.itm['path'] == 'edge_followed_by':
+                method = self.edge_followed_by
+            else:
+                method = self.edge_follow
+                
             yield response.follow(
                 url_list,
-                callback = self.user_list_parse,
+                callback = method,
                 cb_kwargs = {'username':username,
                              'user_id':user_id,
                              'config_path': deepcopy(config_path),
@@ -65,7 +71,7 @@ class InstaparserSpider(scrapy.Spider):
                              'variables':deepcopy(variables)}
             )
 
-    def user_list_parse(self, response:HtmlResponse, username, user_id, config_path, config_hash, variables):
+    def edge_followed_by(self, response:HtmlResponse, username, user_id, config_path, config_hash, variables):
         j_data = json.loads(response.text)
         page_info = j_data.get('data').get('user').get(config_path).get('page_info')   
         if page_info.get('has_next_page'):                                          #Если есть следующая страница
@@ -73,7 +79,7 @@ class InstaparserSpider(scrapy.Spider):
             url_list = f'{self.graphql_url}query_hash={config_hash}&{urlencode(variables)}'
             yield response.follow(
                 url_list,
-                callback=self.user_list_parse,
+                callback=self.edge_followed_by,
                 cb_kwargs = {'username':username,
                              'user_id':user_id,
                              'config_path': deepcopy(config_path),
@@ -89,7 +95,34 @@ class InstaparserSpider(scrapy.Spider):
                 username = user['node']['username'],
                 photo = user['node']['profile_pic_url'],
             )
-        yield item   
+            yield item  
+    
+    
+    def edge_follow(self, response:HtmlResponse, username, user_id, config_path, config_hash, variables):
+        j_data = json.loads(response.text)
+        page_info = j_data.get('data').get('user').get(config_path).get('page_info')   
+        if page_info.get('has_next_page'):                                          #Если есть следующая страница
+            variables['after'] = page_info['end_cursor']                            #Новый параметр для перехода на след. страницу
+            url_list = f'{self.graphql_url}query_hash={config_hash}&{urlencode(variables)}'
+            yield response.follow(
+                url_list,
+                callback=self.edge_follow,
+                cb_kwargs = {'username':username,
+                             'user_id':user_id,
+                             'config_path': deepcopy(config_path),
+                             'config_hash': deepcopy(config_hash),
+                             'variables':deepcopy(variables)}
+            )
+        users = j_data.get('data').get('user').get(config_path).get('edges')
+        for user in users:
+            item = InstagramItem(
+                user_id = user_id,
+                utype = config_path,
+                uid = user['node']['id'],
+                username = user['node']['username'],
+                photo = user['node']['profile_pic_url'],
+            )
+            yield item 
 
 
 
